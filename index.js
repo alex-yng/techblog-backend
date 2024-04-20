@@ -18,9 +18,7 @@ const db = client.db(process.env.DB_NAME);
 app.get("/posts", async (req, res) => {
   await client.connect();
 
-  const query = {};
-
-  const results = await db.collection("posts").find(query).toArray();
+  const results = await db.collection("posts").find().sort({ id: 1 }).toArray();
   console.log("Results: ", results);
 
   res.status(200).send(results);
@@ -35,6 +33,7 @@ app.get("/posts/:id", async (req, res) => {
   if (!result) res.status(404).send("Not Found");
   else {
     console.log(result);
+    console.log(typeof result.id);
     res.status(200).send(result);
   }
 });
@@ -48,7 +47,7 @@ app.post("/posts", async (req, res) => {
   if (!post) res.status(400).send("No data provided");
   else if (
     !post.id ||
-    typeof post.id === "string" ||
+    typeof post.id !== "number" ||
     !post.title ||
     !post.author ||
     !post.content
