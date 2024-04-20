@@ -6,9 +6,12 @@ const { MongoClient } = require("mongodb");
 
 dotenv.config();
 
+// initialize app and middleware
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
+// connect to database
 const HOST = process.env.HOST || "localhost";
 const PORT = process.env.PORT || 8081;
 const client = new MongoClient(process.env.DB_URI);
@@ -24,6 +27,7 @@ app.get("/posts", async (req, res) => {
   res.status(200).send(results);
 });
 
+// get one post by id
 app.get("/posts/:id", async (req, res) => {
   await client.connect();
 
@@ -38,6 +42,7 @@ app.get("/posts/:id", async (req, res) => {
   }
 });
 
+// make new post
 app.post("/posts", async (req, res) => {
   await client.connect();
 
@@ -69,6 +74,7 @@ app.post("/posts", async (req, res) => {
   }
 });
 
+// update post by id
 app.put("/posts/:id", async (req, res) => {
   await client.connect();
 
@@ -93,6 +99,7 @@ app.put("/posts/:id", async (req, res) => {
   }
 });
 
+// delete post by id
 app.delete("/posts/:id", async (req, res) => {
   await client.connect();
 
