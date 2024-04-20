@@ -94,6 +94,20 @@ app.put("/posts/:id", async (req, res) => {
   }
 });
 
+app.delete("/posts/:id", async (req, res) => {
+  await client.connect();
+
+  // find post to delete
+  const query = { id: Number(req.params.id) };
+  const post = await db.collection("posts").findOne(query);
+  if (!post) res.status(404).send("Post does not exist");
+  else {
+    // delete post
+    db.collection("posts").deleteOne(query);
+    res.send("Post deleted").status(200);
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${HOST}:${PORT}`);
 });
