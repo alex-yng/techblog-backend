@@ -1,12 +1,14 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const bodyParser = require("body-parser");
 const { MongoClient } = require("mongodb");
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
+app.use(bodyParser.json());
 const HOST = process.env.HOST || "localhost";
 const PORT = process.env.PORT || 8081;
 const client = new MongoClient(process.env.DB_URI);
@@ -21,7 +23,7 @@ app.get("/posts", async (req, res) => {
   const results = await db.collection("posts").find(query).toArray();
   console.log("Results: ", results);
 
-  res.send(results).status(200);
+  res.status(200).send(results);
 });
 
 app.get("/posts/:id", async (req, res) => {
@@ -30,10 +32,10 @@ app.get("/posts/:id", async (req, res) => {
   const query = { id: Number(req.params.id) };
   const result = await db.collection("posts").findOne(query);
 
-  if (!result) res.send("Not Found").status(404);
+  if (!result) res.status(404).send("Not Found");
   else {
     console.log(result);
-    res.send(result).status(200);
+    res.status(200).send(result);
   }
 });
 
@@ -42,43 +44,54 @@ app.post("/posts", async (req, res) => {
 
   // get request body and check if valid
   const post = req.body;
-  if (!post) res.send("No data provided").status(400);
-  if (!post.id || !post.title || !post.author || !post.content)
-    res.send("Missing info").status(400);
+  console.log(post);
+  if (!post) res.status(400).send("No data provided");
+  else if (
+    !post.id ||
+    typeof post.id === "string" ||
+    !post.title ||
+    !post.author ||
+    !post.content
+  )
+    res.status(400).send("Bad request; missing/incorret info format");
+  else {
+    // check if post already exists (kind of scuffed but this is at least something)
+    query = { id: post.id };
+    const exists = await db.collection("posts").findOne(query);
+    if (exists) res.status(400).send("Post already exists");
+    else {
+      // add timestamp to post
+      post.timestamp = new Date();
 
-  // check if post already exists (kind of scuffed but this is at least something)
-  query = { id: post.id };
-  const exists = await db.collection("posts").findOne(query);
-  if (exists) res.send("Post already exists").status(400);
-
-  // add timestamp to post
-  post.timestamp = new Date();
-
-  // insert post into database
-  const results = await db.collection("posts").insertOne(post);
-  res.send(results).status(201);
+      // insert post into database
+      const results = await db.collection("posts").insertOne(post);
+      res.status(201).send(results);
+    }
+  }
 });
 
 app.put("/posts/:id", async (req, res) => {
   await client.connect();
 
   // find post to update
-  const query = { id: req.params.id };
-  const exists = await db.collection("posts").findOne(query);
-  if (!exists) res.send("Post does not exist").status(404);
+  const query = { id: Number(req.params.id) };
+  const post = await db.collection("posts").findOne(query);
+  if (!post) res.send("Post does not exist").status(404);
+  else {
+    const newPost = { $set: { ...req.body, id: post.id } };
+    if (!post) res.send("No data provided").status(400);
+    // check missing info
+    else if (!post.title || !post.author || !post.content) {
+      res.send("Missing title, author, and or content").status(400);
+    }
 
-  // update post
-  const newPost = req.body;
-  if (!post) res.send("No data provided").status(400);
-  if (!post.title || !post.author || !post.content)
-    res.send("Missing title, author, and or content").status(400);
-
-  // add updated timestamp to post
-  newPost.lastEdited = new Date();
-
-  // update post
-  db.collection("posts").updateOne(query, newPost);
-  res.send("Post updated").status(200);
+    // update post
+    else {
+      // update post
+      db.collection("posts").updateOne(query, newPost);
+      res.send("Post updated").status(200);
+    }
+  }
 });
 
 app.listen(PORT, () => {
