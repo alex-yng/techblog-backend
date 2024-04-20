@@ -18,15 +18,16 @@ app.get("/posts", async (req, res) => {
 
   const query = {};
 
-  const results = await db.collection("posts").find(query);
+  const results = await db.collection("posts").find(query).toArray();
   console.log("Results: ", results);
+
   res.send(results).status(200);
 });
 
 app.get("/posts/:id", async (req, res) => {
   await client.connect();
 
-  const query = { id: req.params.id };
+  const query = { id: Number(req.params.id) };
   const result = await db.collection("posts").findOne(query);
 
   if (!result) res.send("Not Found").status(404);
