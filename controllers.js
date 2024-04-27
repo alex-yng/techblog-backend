@@ -5,18 +5,17 @@ dotenv.config();
 // connect to database
 const client = new MongoClient(process.env.DB_URI);
 const db = client.db(process.env.DB_NAME);
+const connect = async () => await client.connect();
+connect();
 
 // get all posts
 const getAllPosts = async (req, res) => {
-  await client.connect();
   const results = await db.collection("posts").find().sort({ id: 1 }).toArray();
   res.status(200).send(results);
 };
 
 // get single post by id
 const getPost = async (req, res) => {
-  await client.connect();
-
   const query = { title_slug: req.params.title_slug };
   const result = await db.collection("posts").findOne(query);
 
@@ -28,8 +27,6 @@ const getPost = async (req, res) => {
 
 // make new post
 const createPost = async (req, res) => {
-  await client.connect();
-
   // get request body and check if valid
   let post = req.body;
   if (!post) res.status(400).send("No data provided");
@@ -54,8 +51,6 @@ const createPost = async (req, res) => {
 
 // update post by id
 const updatePost = async (req, res) => {
-  await client.connect();
-
   // find post to update
   const query = { title_slug: req.params.title_slug };
   const post = await db.collection("posts").findOne(query);
@@ -93,8 +88,6 @@ const updatePost = async (req, res) => {
 
 // delete post by id
 const deletePost = async (req, res) => {
-  await client.connect();
-
   // find post to delete
   const query = { title_slug: req.params.title_slug };
   const post = await db.collection("posts").findOne(query);
