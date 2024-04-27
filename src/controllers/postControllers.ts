@@ -1,10 +1,8 @@
-// const dotenv = require("dotenv");
-// dotenv.config();
-// const db = require("./db");
 import dotenv from "dotenv";
 dotenv.config();
 import db from "../db";
 import { Request, Response } from "express";
+import { Post } from "../types";
 
 // get all posts
 export const getAllPosts = async (req: Request, res: Response) => {
@@ -30,17 +28,17 @@ export const getPost = async (req: Request, res: Response) => {
 // make new post
 export const createPost = async (req: Request, res: Response) => {
   // get request body and check if valid
-  let post = req.body;
+  let post = req.body as Post;
   if (!post) res.status(400).send("No data provided");
-  else if (!post.title || !post.author || !post.content)
+  else if (!post.title || !post.author || !post.description || !post.content)
     res.status(400).send("Bad request; missing/incorrect info format");
   else {
     // check if post already exists (kind of scuffed but this is at least something)
-    const query = { title: post.title };
+    const query = { title_slug: post.title_slug };
     const exists = await db.collection("posts").findOne(query);
     if (exists) res.status(400).send("Post already exists");
     else {
-      // add timestamp to post
+      // add timestamp to post and slug
       post.timestamp = new Date();
       post.title_slug = post.title.toLowerCase().replace(/\s/g, "-");
 
@@ -62,6 +60,7 @@ export const updatePost = async (req: Request, res: Response) => {
       $set: {
         title: req.body.title,
         author: req.body.author,
+        description: req.body.description,
         content: req.body.content,
         title_slug: req.body.title.toLowerCase().replace(/\s/g, "-"),
       },
@@ -74,6 +73,7 @@ export const updatePost = async (req: Request, res: Response) => {
     else if (
       !updatedPost.$set.title ||
       !updatedPost.$set.author ||
+      !updatedPost.$set.description ||
       !updatedPost.$set.content
     ) {
       res.status(400).send("Missing title, author, and or content");
@@ -100,11 +100,3 @@ export const deletePost = async (req: Request, res: Response) => {
     res.send("Post deleted").status(200);
   }
 };
-
-// module.exports = {
-//   getAllPosts,
-//   getPost,
-//   createPost,
-//   updatePost,
-//   deletePost,
-// };
