@@ -1,15 +1,13 @@
-const { MongoClient } = require("mongodb");
-const dotenv = require("dotenv");
+// const dotenv = require("dotenv");
+// dotenv.config();
+// const db = require("./db");
+import dotenv from "dotenv";
 dotenv.config();
-
-// connect to database
-const client = new MongoClient(process.env.DB_URI);
-const db = client.db(process.env.DB_NAME);
-const connect = async () => await client.connect();
-connect();
+import db from "../db";
+import { Request, Response } from "express";
 
 // get all posts
-const getAllPosts = async (req, res) => {
+export const getAllPosts = async (req: Request, res: Response) => {
   const results = await db
     .collection("posts")
     .find()
@@ -19,7 +17,7 @@ const getAllPosts = async (req, res) => {
 };
 
 // get single post by id
-const getPost = async (req, res) => {
+export const getPost = async (req: Request, res: Response) => {
   const query = { title_slug: req.params.title_slug };
   const result = await db.collection("posts").findOne(query);
 
@@ -30,7 +28,7 @@ const getPost = async (req, res) => {
 };
 
 // make new post
-const createPost = async (req, res) => {
+export const createPost = async (req: Request, res: Response) => {
   // get request body and check if valid
   let post = req.body;
   if (!post) res.status(400).send("No data provided");
@@ -38,7 +36,7 @@ const createPost = async (req, res) => {
     res.status(400).send("Bad request; missing/incorrect info format");
   else {
     // check if post already exists (kind of scuffed but this is at least something)
-    query = { title: post.title };
+    const query = { title: post.title };
     const exists = await db.collection("posts").findOne(query);
     if (exists) res.status(400).send("Post already exists");
     else {
@@ -54,7 +52,7 @@ const createPost = async (req, res) => {
 };
 
 // update post by id
-const updatePost = async (req, res) => {
+export const updatePost = async (req: Request, res: Response) => {
   // find post to update
   const query = { title_slug: req.params.title_slug };
   const post = await db.collection("posts").findOne(query);
@@ -91,7 +89,7 @@ const updatePost = async (req, res) => {
 };
 
 // delete post by id
-const deletePost = async (req, res) => {
+export const deletePost = async (req: Request, res: Response) => {
   // find post to delete
   const query = { title_slug: req.params.title_slug };
   const post = await db.collection("posts").findOne(query);
@@ -103,10 +101,10 @@ const deletePost = async (req, res) => {
   }
 };
 
-module.exports = {
-  getAllPosts,
-  getPost,
-  createPost,
-  updatePost,
-  deletePost,
-};
+// module.exports = {
+//   getAllPosts,
+//   getPost,
+//   createPost,
+//   updatePost,
+//   deletePost,
+// };
