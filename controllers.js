@@ -10,7 +10,11 @@ connect();
 
 // get all posts
 const getAllPosts = async (req, res) => {
-  const results = await db.collection("posts").find().sort({ id: 1 }).toArray();
+  const results = await db
+    .collection("posts")
+    .find()
+    .sort({ timestamp: -1 })
+    .toArray();
   res.status(200).send(results);
 };
 
