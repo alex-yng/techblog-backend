@@ -8,11 +8,11 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// endpoints
+// crud endpoints
 app.get("/posts", controller.getAllPosts);
-app.get("/posts/:id", controller.getPost);
+app.get("/posts/:title_slug", controller.getPost);
 app.post("/posts", controller.createPost);
-app.put("/posts/:id", controller.updatePost);
-app.delete("/posts/:id", controller.deletePost);
+app.put("/posts/:title_slug", controller.updatePost);
+app.delete("/posts/:title_slug", controller.deletePost);
 
 module.exports = app;

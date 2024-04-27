@@ -9,10 +9,7 @@ const db = client.db(process.env.DB_NAME);
 // get all posts
 const getAllPosts = async (req, res) => {
   await client.connect();
-
   const results = await db.collection("posts").find().sort({ id: 1 }).toArray();
-  console.log("Results: ", results);
-
   res.status(200).send(results);
 };
 
@@ -20,13 +17,11 @@ const getAllPosts = async (req, res) => {
 const getPost = async (req, res) => {
   await client.connect();
 
-  const query = { id: Number(req.params.id) };
+  const query = { title_slug: req.params.title_slug };
   const result = await db.collection("posts").findOne(query);
 
   if (!result) res.status(404).send("Not Found");
   else {
-    console.log(result);
-    console.log(typeof result.id);
     res.status(200).send(result);
   }
 };
@@ -36,25 +31,19 @@ const createPost = async (req, res) => {
   await client.connect();
 
   // get request body and check if valid
-  const post = req.body;
-  console.log(post);
+  let post = req.body;
   if (!post) res.status(400).send("No data provided");
-  else if (
-    !post.id ||
-    typeof post.id !== "number" ||
-    !post.title ||
-    !post.author ||
-    !post.content
-  )
-    res.status(400).send("Bad request; missing/incorret info format");
+  else if (!post.title || !post.author || !post.content)
+    res.status(400).send("Bad request; missing/incorrect info format");
   else {
     // check if post already exists (kind of scuffed but this is at least something)
-    query = { id: post.id };
+    query = { title: post.title };
     const exists = await db.collection("posts").findOne(query);
     if (exists) res.status(400).send("Post already exists");
     else {
       // add timestamp to post
       post.timestamp = new Date();
+      post.title_slug = post.title.toLowerCase().replace(/\s/g, "-");
 
       // insert post into database
       const results = await db.collection("posts").insertOne(post);
@@ -68,21 +57,35 @@ const updatePost = async (req, res) => {
   await client.connect();
 
   // find post to update
-  const query = { id: Number(req.params.id) };
+  const query = { title_slug: req.params.title_slug };
   const post = await db.collection("posts").findOne(query);
-  if (!post) res.send("Post does not exist").status(404);
+  if (!post) res.status(404).send("Post does not exist");
   else {
-    const newPost = { $set: { ...req.body, id: post.id } };
-    if (!post) res.send("No data provided").status(400);
+    const updatedPost = {
+      $set: {
+        title: req.body.title,
+        author: req.body.author,
+        content: req.body.content,
+        title_slug: req.body.title.toLowerCase().replace(/\s/g, "-"),
+      },
+      $currentDate: { lastUpdated: true },
+    };
+    if (!updatedPost) {
+      res.status(400).send("No data provided");
+    }
     // check missing info
-    else if (!post.title || !post.author || !post.content) {
-      res.send("Missing title, author, and or content").status(400);
+    else if (
+      !updatedPost.$set.title ||
+      !updatedPost.$set.author ||
+      !updatedPost.$set.content
+    ) {
+      res.status(400).send("Missing title, author, and or content");
     }
 
     // update post
     else {
       // update post
-      db.collection("posts").updateOne(query, newPost);
+      db.collection("posts").updateOne(query, updatedPost);
       res.send("Post updated").status(200);
     }
   }
@@ -93,7 +96,7 @@ const deletePost = async (req, res) => {
   await client.connect();
 
   // find post to delete
-  const query = { id: Number(req.params.id) };
+  const query = { title_slug: req.params.title_slug };
   const post = await db.collection("posts").findOne(query);
   if (!post) res.status(404).send("Post does not exist");
   else {
