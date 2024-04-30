@@ -81,7 +81,6 @@ export const updatePost = async (req: Request, res: Response) => {
 
     // update post
     else {
-      // update post
       db.collection("posts").updateOne(query, updatedPost);
       res.send("Post updated").status(200);
     }
