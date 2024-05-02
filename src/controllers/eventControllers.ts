@@ -9,7 +9,7 @@ export const getAllEvents = async (req: Request, res: Response) => {
   const results = await db
     .collection("events")
     .find()
-    .sort({ timestamp: -1 })
+    .sort({ date: 1 })
     .toArray();
   res.status(200).send(results);
 };
