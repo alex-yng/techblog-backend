@@ -11,7 +11,7 @@ export const getAllEvents = async (req: Request, res: Response) => {
     .find()
     .sort({ date: 1 })
     .toArray();
-  res.status(200).send(results);
+  res.status(200).send(results as Event[]);
 };
 
 // get single event by title_slug
@@ -21,7 +21,7 @@ export const getEvent = async (req: Request, res: Response) => {
 
   if (!result) res.status(404).send("Not Found");
   else {
-    res.status(200).send(result);
+    res.status(200).send(result as Event);
   }
 };
 

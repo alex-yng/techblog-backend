@@ -11,7 +11,7 @@ export const getAllPosts = async (req: Request, res: Response) => {
     .find()
     .sort({ timestamp: -1 })
     .toArray();
-  res.status(200).send(results);
+  res.status(200).send(results as Event[]);
 };
 
 // get single post by id
